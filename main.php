@@ -87,7 +87,7 @@ function check_mac_addresses($conn, $ids_a, $db_tabble, $column) {
         $query = "SELECT ".$column." FROM ".$db_tabble." WHERE id = ".$ids_a[$i].";";
         $result = $conn -> query($query);
         $row = $result->fetch_assoc();
-        $pattern = "/[0-9A-z]{2}:[0-9A-z]{2}:[0-9A-z]{2}:[0-9A-z]{2}:[0-9A-z]{2}:[0-9A-z]{2}/";
+        $pattern = "/([0-9A-z]{2}:){5}([0-9A-z]{2})|any|ANY/";
 
         if (!preg_match($pattern, $row["$column"])) {
             $need_format_ids_a[$j] = $ids_a[$i];
@@ -101,10 +101,10 @@ function check_mac_addresses($conn, $ids_a, $db_tabble, $column) {
 function reformat($conn, $ids_a, $db_tabble, $db_column) {
     $count = count($ids_a);
     for ($i=0; $i<$count; $i++) {
-        $query = "SELECT ".$db_column." FROM ".$db_tabble." WHERE id = ".$ids_a[$i].";";
+        $query = "SELECT ".$db_column.", uid FROM ".$db_tabble." WHERE id = ".$ids_a[$i].";";
         $result = $conn -> query($query);
         $row = $result -> fetch_assoc();
-        echo("id ".$ids_a[$i]." | ".$row[$db_column]." -> ");
+        echo("UID ".$row["uid"]." | ".$row[$db_column]." -> ");
         
         $row[$db_column] = clear($row[$db_column]);
 
@@ -113,8 +113,6 @@ function reformat($conn, $ids_a, $db_tabble, $db_column) {
 
         $query = "UPDATE `".$db_tabble."` SET `".$db_column."` = '".$str."' WHERE `id` = ".$ids_a[$i].";";  
         $conn -> query($query);
-
-        break;
     }
 }
 
