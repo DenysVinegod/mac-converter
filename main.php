@@ -54,13 +54,16 @@ if( (isset($_POST["db_ip"])) &&
         if (!$conn) {
             die("Connection failed: " . mysqli_connect_error());
         }
+
         echo "Connected successfully<br>";
-// UPDATE `internet_main` SET `cid` = 'a0:c6ec01b4bd' WHERE `internet_main`.`id` = 893;
+
         $ids_a = get_ids_with_MAC_array($conn, $_POST["db_tabble"], $_POST["column"]);
         echo ("Found rows with MAC addresses: ".count($ids_a)."<br>");
         
-        $ids_need_formatt_a = check_mac_addresses($conn, $ids_a, $_POST["db_tabble"], $_POST["column"]);
-        echo ("Rows need to formatt: ".count($ids_need_formatt_a)."<hr>");
+        $ids_need_format_a = check_mac_addresses($conn, $ids_a, $_POST["db_tabble"], $_POST["column"]);
+        echo ("Rows need to format: ".count($ids_need_format_a)."<hr>");
+
+        reformat($conn, $ids_need_format_a, $_POST["db_tabble"], $_POST["column"]);
 }
 
 function get_ids_with_MAC_array ($conn, $db_tabble, $db_column) {
@@ -77,7 +80,7 @@ function get_ids_with_MAC_array ($conn, $db_tabble, $db_column) {
     return $rows_with_mac_a;
 }
 
-function check_mac_addresses($conn, $ids_a, $db_tabble, $column){
+function check_mac_addresses($conn, $ids_a, $db_tabble, $column) {
     $need_format_ids_a = array();
     $j = 0;
     for ( $i = 0; $i < count($ids_a); $i++ ) {
@@ -85,7 +88,6 @@ function check_mac_addresses($conn, $ids_a, $db_tabble, $column){
         $result = $conn -> query($query);
         $row = $result->fetch_assoc();
         $pattern = "/[0-9A-z]{2}:[0-9A-z]{2}:[0-9A-z]{2}:[0-9A-z]{2}:[0-9A-z]{2}:[0-9A-z]{2}/";
-        // echo ($query." | ".$row["$column"]." | ".preg_match($pattern, $row["$column"])."<br>");
 
         if (!preg_match($pattern, $row["$column"])) {
             $need_format_ids_a[$j] = $ids_a[$i];
@@ -94,5 +96,31 @@ function check_mac_addresses($conn, $ids_a, $db_tabble, $column){
     }
 
     return $need_format_ids_a;
+}
+
+function reformat($conn, $ids_a, $db_tabble, $db_column) {
+    $count = count($ids_a);
+    for ($i=0; $i<$count; $i++) {
+        $query = "SELECT ".$db_column." FROM ".$db_tabble." WHERE id = ".$ids_a[$i].";";
+        $result = $conn -> query($query);
+        $row = $result -> fetch_assoc();
+        echo("id ".$ids_a[$i]." | ".$row[$db_column]." -> ");
+        
+        $row[$db_column] = clear($row[$db_column]);
+
+        $str = preg_replace('~(..)(?!$)\.?~', '\1:', $row[$db_column]);
+        echo ($str."<br>");
+
+        $query = "UPDATE `".$db_tabble."` SET `".$db_column."` = '".$str."' WHERE `id` = ".$ids_a[$i].";";  
+        $conn -> query($query);
+
+        break;
+    }
+}
+
+function clear($string){
+    $pattern = "/[^0-9A-z]/";
+    $result = preg_replace($pattern, '', $string);
+    return $result;
 }
 ?>
