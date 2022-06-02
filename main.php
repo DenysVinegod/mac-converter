@@ -56,12 +56,15 @@ if( (isset($_POST["db_ip"])) &&
         }
         echo "Connected successfully<br>";
 // UPDATE `internet_main` SET `cid` = 'a0:c6ec01b4bd' WHERE `internet_main`.`id` = 893;
-        $ids_a = get_ids_with_MAC_array($conn, $_POST["db_tabble"]);
-        echo ("Found rows with MAC addresses: ".count($ids_a));
+        $ids_a = get_ids_with_MAC_array($conn, $_POST["db_tabble"], $_POST["column"]);
+        echo ("Found rows with MAC addresses: ".count($ids_a)."<br>");
+        
+        $ids_need_formatt_a = check_mac_addresses($conn, $ids_a, $_POST["db_tabble"], $_POST["column"]);
+        echo ("Rows need to formatt: ".count($ids_need_formatt_a)."<hr>");
 }
 
-function get_ids_with_MAC_array ($conn ,$db_tabble) {
-    $query = "SELECT id FROM " . $db_tabble . " WHERE NOT cid = '';";
+function get_ids_with_MAC_array ($conn, $db_tabble, $db_column) {
+    $query = "SELECT id FROM " . $db_tabble . " WHERE NOT ".$db_column." = '';";
     $result = $conn -> query($query);
 
     $i = 0;
@@ -72,5 +75,24 @@ function get_ids_with_MAC_array ($conn ,$db_tabble) {
     }
 
     return $rows_with_mac_a;
+}
+
+function check_mac_addresses($conn, $ids_a, $db_tabble, $column){
+    $need_format_ids_a = array();
+    $j = 0;
+    for ( $i = 0; $i < count($ids_a); $i++ ) {
+        $query = "SELECT ".$column." FROM ".$db_tabble." WHERE id = ".$ids_a[$i].";";
+        $result = $conn -> query($query);
+        $row = $result->fetch_assoc();
+        $pattern = "/[0-9A-z]{2}:[0-9A-z]{2}:[0-9A-z]{2}:[0-9A-z]{2}:[0-9A-z]{2}:[0-9A-z]{2}/";
+        // echo ($query." | ".$row["$column"]." | ".preg_match($pattern, $row["$column"])."<br>");
+
+        if (!preg_match($pattern, $row["$column"])) {
+            $need_format_ids_a[$j] = $ids_a[$i];
+            $j++;
+        }
+    }
+
+    return $need_format_ids_a;
 }
 ?>
