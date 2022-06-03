@@ -111,7 +111,7 @@ function reformat($conn, $ids_a, $db_tabble, $db_column) {
         $str = preg_replace('~(..)(?!$)\.?~', '\1:', $row[$db_column]);
         echo ($str."<br>");
 
-        $query = "UPDATE `".$db_tabble."` SET `".$db_column."` = '".$str."' WHERE `id` = ".$ids_a[$i].";";  
+        $query = "UPDATE `".$db_tabble."` SET `".$db_column."` = '".$str."' WHERE `id` = ".$ids_a[$i].";";
         $conn -> query($query);
     }
 }
